@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+    client:
+        container_name: foo
+        build:
+            context: .
+            dockerfile: Dockerfile.client
+        environment:
+            CLIENT_ENDPOINT: client:50051
+            SERVER_ENDPOINT: server:50052
+    server:
+        container_name: bar
+        build:
+            context: .
+            dockerfile: Dockerfile.server
+        environment:
+            CLIENT_ENDPOINT: client:50051
+            SERVER_ENDPOINT: server:50052
