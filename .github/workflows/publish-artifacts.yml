@@ -5,6 +5,7 @@ on:
     branches:
       - "develop"
       - "main"
+      - "*"
     tags:
       - "*"
 
@@ -16,7 +17,7 @@ jobs:
       - uses: elgohr/Publish-Docker-Github-Action@master
         id: publish
         with:
-          name: luckless-finance/query
+          name: grahamcrowell/query
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           dockerfile: Dockerfile
