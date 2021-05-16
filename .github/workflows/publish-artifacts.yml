@@ -1,0 +1,25 @@
+name: Publish Artifacts
+
+on:
+  push:
+    branches:
+      - "develop"
+      - "main"
+    tags:
+      - "*"
+
+jobs:
+  docker-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: elgohr/Publish-Docker-Github-Action@master
+        id: publish
+        with:
+          name: luckless-finance/query
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          dockerfile: Dockerfile
+          snapshot: true
+          tag_names: true
+          cache: ${{ github.event_name != 'schedule' }}
