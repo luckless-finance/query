@@ -26,11 +26,6 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: grahamcrowell/query
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
