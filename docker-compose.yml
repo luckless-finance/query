@@ -13,7 +13,7 @@ services:
         container_name: bar
         build:
             context: .
-            dockerfile: Dockerfile.server
+            dockerfile: Dockerfile
         environment:
             CLIENT_ENDPOINT: client:50051
             SERVER_ENDPOINT: server:50052
