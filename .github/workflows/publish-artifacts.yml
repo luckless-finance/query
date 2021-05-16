@@ -1,5 +1,6 @@
 name: dockerhub
-
+# https://github.com/docker/build-push-action/blob/master/docs/advanced/tags-labels.md
+# https://github.com/docker/metadata-action#semver
 on:
   push:
     branches:
