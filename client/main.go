@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/luckless-finance/luckless"
 	"io"
 	"log"
@@ -13,14 +14,22 @@ import (
 
 const (
 	// "server" is service name from docker-compose
-	address     = "localhost:50052"
-	defaultName = "world"
+	defaultQueryHost = "localhost"
+	queryPort        = "50052"
+	defaultName      = "world"
 )
 
 func main() {
-	log.Printf("starting client to query server @ %s", address)
+	queryHost := os.Getenv("QUERY_HOST")
+	if queryHost == "" {
+		queryHost = defaultQueryHost
+		log.Printf("QUERY_HOST defaulting to %s\n", defaultQueryHost)
+	}
+	queryAddress := fmt.Sprintf("%s:%s", queryHost, queryPort)
+
+	log.Printf("starting client to query server @ %s", queryAddress)
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(queryAddress, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

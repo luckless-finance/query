@@ -3,7 +3,7 @@ FROM golang:1.16
 WORKDIR /go/src/github.com/luckless-finance/query
 COPY go.mod .
 COPY go.sum .
-COPY luckless luckless
-COPY luckless_client luckless_client
+COPY *.go ./
+COPY client luckless_client
 
 CMD go run luckless_client/main.go
