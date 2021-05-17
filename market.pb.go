@@ -4,7 +4,7 @@
 // 	protoc        v3.12.3
 // source: market.proto
 
-package market
+package query
 
 import (
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"

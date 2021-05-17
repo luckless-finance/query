@@ -2,30 +2,30 @@ package main
 
 import (
 	"context"
+	"github.com/luckless-finance/luckless"
 	"io"
 	"log"
 	"os"
 	"time"
 
-	pb "github.com/luckless-finance/luckless/luckless"
 	"google.golang.org/grpc"
 )
 
 const (
 	// "server" is service name from docker-compose
-	address     = "server:50052"
+	address     = "localhost:50052"
 	defaultName = "world"
 )
 
 func main() {
-	log.Printf("starting client...")
+	log.Printf("starting client to query server @ %s", address)
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	client := pb.NewMarketDataClient(conn)
+	client := query.NewMarketDataClient(conn)
 
 	// Contact the server and print out its response.
 	name := defaultName
@@ -38,11 +38,11 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		r, err := client.Query(ctx, &pb.RangeRequest{
+		r, err := client.Query(ctx, &query.RangeRequest{
 			Symbol:   name,
 			First:    nil,
 			Last:     nil,
-			Calendar: pb.Calendar_COMPLETE,
+			Calendar: query.Calendar_COMPLETE,
 		})
 		if err != nil {
 			log.Fatalf("could not Query: %v", err)
@@ -54,11 +54,11 @@ func main() {
 	{
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		stream, err := client.QueryStream(ctx, &pb.RangeRequest{
+		stream, err := client.QueryStream(ctx, &query.RangeRequest{
 			Symbol:   name,
 			First:    nil,
 			Last:     nil,
-			Calendar: pb.Calendar_COMPLETE,
+			Calendar: query.Calendar_COMPLETE,
 		})
 
 		if err != nil {
