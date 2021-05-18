@@ -11,8 +11,9 @@ import (
 
 type TimeSeriesPoint struct {
 	Timestamp time.Time
-	Subject   string
-	Value     float64
+	//Timestamp time.Time `gorm:"uniqueIndex"`
+	Subject string
+	Value   float64
 }
 
 func CreateSchema() {
@@ -45,7 +46,8 @@ func CreateSchema() {
 	}
 
 	// convert to timescale
-	//db.Exec(fmt.Sprintf("SELECT create_hypertable('%s', '%s');", "time_series_point", "timestamp"))
+	db.Exec(fmt.Sprintf("SELECT create_hypertable('%s', '%s');", "time_series_points", "timestamp"))
+	log.Default().Printf("ok hypertable created")
 
 	// Create
 	db.Create(&TimeSeriesPoint{Timestamp: time.Now(), Subject: "ABC-CLOSE", Value: 123.0})
