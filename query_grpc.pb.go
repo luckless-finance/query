@@ -18,8 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MarketDataClient interface {
-	Query(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*TimeSeries, error)
-	QueryStream(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (MarketData_QueryStreamClient, error)
+	Query(ctx context.Context, in *RangedRequest, opts ...grpc.CallOption) (*TimeSeries, error)
 }
 
 type marketDataClient struct {
@@ -30,53 +29,20 @@ func NewMarketDataClient(cc grpc.ClientConnInterface) MarketDataClient {
 	return &marketDataClient{cc}
 }
 
-func (c *marketDataClient) Query(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (*TimeSeries, error) {
+func (c *marketDataClient) Query(ctx context.Context, in *RangedRequest, opts ...grpc.CallOption) (*TimeSeries, error) {
 	out := new(TimeSeries)
-	err := c.cc.Invoke(ctx, "/market.MarketData/Query", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/query.MarketData/Query", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *marketDataClient) QueryStream(ctx context.Context, in *RangeRequest, opts ...grpc.CallOption) (MarketData_QueryStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MarketData_ServiceDesc.Streams[0], "/market.MarketData/QueryStream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &marketDataQueryStreamClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type MarketData_QueryStreamClient interface {
-	Recv() (*DataPoint, error)
-	grpc.ClientStream
-}
-
-type marketDataQueryStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *marketDataQueryStreamClient) Recv() (*DataPoint, error) {
-	m := new(DataPoint)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // MarketDataServer is the server API for MarketData service.
 // All implementations must embed UnimplementedMarketDataServer
 // for forward compatibility
 type MarketDataServer interface {
-	Query(context.Context, *RangeRequest) (*TimeSeries, error)
-	QueryStream(*RangeRequest, MarketData_QueryStreamServer) error
+	Query(context.Context, *RangedRequest) (*TimeSeries, error)
 	mustEmbedUnimplementedMarketDataServer()
 }
 
@@ -84,11 +50,8 @@ type MarketDataServer interface {
 type UnimplementedMarketDataServer struct {
 }
 
-func (UnimplementedMarketDataServer) Query(context.Context, *RangeRequest) (*TimeSeries, error) {
+func (UnimplementedMarketDataServer) Query(context.Context, *RangedRequest) (*TimeSeries, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
-}
-func (UnimplementedMarketDataServer) QueryStream(*RangeRequest, MarketData_QueryStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method QueryStream not implemented")
 }
 func (UnimplementedMarketDataServer) mustEmbedUnimplementedMarketDataServer() {}
 
@@ -104,7 +67,7 @@ func RegisterMarketDataServer(s grpc.ServiceRegistrar, srv MarketDataServer) {
 }
 
 func _MarketData_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RangeRequest)
+	in := new(RangedRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -113,40 +76,19 @@ func _MarketData_Query_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/market.MarketData/Query",
+		FullMethod: "/query.MarketData/Query",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MarketDataServer).Query(ctx, req.(*RangeRequest))
+		return srv.(MarketDataServer).Query(ctx, req.(*RangedRequest))
 	}
 	return interceptor(ctx, in, info, handler)
-}
-
-func _MarketData_QueryStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(RangeRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(MarketDataServer).QueryStream(m, &marketDataQueryStreamServer{stream})
-}
-
-type MarketData_QueryStreamServer interface {
-	Send(*DataPoint) error
-	grpc.ServerStream
-}
-
-type marketDataQueryStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *marketDataQueryStreamServer) Send(m *DataPoint) error {
-	return x.ServerStream.SendMsg(m)
 }
 
 // MarketData_ServiceDesc is the grpc.ServiceDesc for MarketData service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MarketData_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "market.MarketData",
+	ServiceName: "query.MarketData",
 	HandlerType: (*MarketDataServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -154,12 +96,6 @@ var MarketData_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MarketData_Query_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "QueryStream",
-			Handler:       _MarketData_QueryStream_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "market.proto",
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "query.proto",
 }

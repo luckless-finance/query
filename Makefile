@@ -7,63 +7,41 @@ clean:
 	@echo "-------------------"
 	@echo "delete generated artifacts"
 	@echo "-------------------"
-	rm -fr target
+	@go clean
+	@rm -fr target || true
+
+grpc: query_grpc.pb.go query.pb.go
+	@echo "-------------------"
+	@echo "generate protobuf service files"
+	@echo "-------------------"
+	@protoc --proto_path=proto --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative query.proto
 
 docker:
 	@echo "-------------------"
 	@echo "build docker image"
 	@echo "-------------------"
-	docker build --file Dockerfile --tag grahamcrowell/query:latest .
-	docker push grahamcrowell/query:latest
-
-docs:
-	@echo "-------------------"
-	@echo "make and open docs"
-	@echo "-------------------"
-	cargo doc --open --no-deps
+	@docker build --file Dockerfile --tag grahamcrowell/query:latest .
+	@docker push grahamcrowell/query:latest
 
 format:
 	@echo "-------------------"
 	@echo "format source code"
 	@echo "-------------------"
-	rustfmt --edition 2018  src/*;
-	rustfmt	 --edition 2018 tests/*;
+	@gofmt -s -w -l -e **/*.go
+	@gofmt -s -w -l -e *.go
+	@go vet
 
-check:
+pre-commit:
 	@echo "-------------------"
-	@echo "check a local package and all of its dependencies for errors"
+	@echo "pre-commit validation"
 	@echo "-------------------"
-	rustfmt --check --edition 2018 --quiet src/*;
-	rustfmt --check --edition 2018 --quiet tests/*;
-	cargo check;
-
-fix:
-	@echo "-------------------"
-	@echo "fix imports and unused"
-	@echo "-------------------"
-	cargo fix;
+	@# https://stackoverflow.com/a/67962664/5154695
+	@# test -z $(gofmt -l **/*.go)
+	@./scripts/fmt-err.sh
+	@make test
 
 test:
 	@echo "-------------------"
 	@echo "execute unit and integration tests"
 	@echo "-------------------"
-	cargo test;
-
-pre-commit: check
-	@echo "-------------------"
-	@echo "pre-commit validation: test, format, check"
-	@echo "-------------------"
-	cargo test --quiet
-
-watch-test:
-	@echo "-------------------"
-	@echo "run tests whenever files change (see .ignore)"
-	@echo "-------------------"
-	cargo watch -x test
-
-release:
-	@echo "-------------------"
-	@echo "build release binary (see ./target/release)"
-	@echo "-------------------"
-	cargo build --release --all-targets
-
+	@go test *.go;
