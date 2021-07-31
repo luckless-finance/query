@@ -4,6 +4,10 @@
 ```bash
 docker-compose up --build --abort-on-container-exit 
 ```
+or
+```bash
+go run server/main.go
+```
 
 converted from [golang grpc examples helloworld and route_guide](https://github.com/grpc/grpc-go/tree/master/examples/helloworld)
 ## Luckless Component Apps

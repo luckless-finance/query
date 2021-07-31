@@ -3,20 +3,22 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/luckless-finance/luckless"
-	"io"
+	"github.com/golang/protobuf/ptypes"
+	query "github.com/luckless-finance/luckless"
+	"google.golang.org/grpc"
 	"log"
 	"os"
 	"time"
-
-	"google.golang.org/grpc"
 )
 
 const (
 	// "server" is service name from docker-compose
 	defaultQueryHost = "localhost"
 	queryPort        = "50052"
-	defaultName      = "world"
+	defaultName      = "FOO"
+	defaultSeries    = "CLOSE"
+	defaultFirst     = "2020-01-01T00:00:00Z" // time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
+	defaultLast      = "2021-01-01T00:00:00Z" // time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func main() {
@@ -38,51 +40,47 @@ func main() {
 
 	// Contact the server and print out its response.
 	name := defaultName
-	if len(os.Args) > 1 {
+	series := defaultSeries
+	if len(os.Args) > 2 {
 		name = os.Args[1]
+		series = os.Args[2]
+	}
+	firstStr := defaultFirst
+	lastStr := defaultLast
+	if len(os.Args) > 4 {
+		firstStr = os.Args[3]
+		lastStr = os.Args[4]
 	}
 
 	// demo 1 call to Query
 	{
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-
-		r, err := client.Query(ctx, &query.RangeRequest{
-			Symbol:   name,
-			First:    nil,
-			Last:     nil,
-			Calendar: query.Calendar_COMPLETE,
+		firstTime, err := time.Parse(time.RFC3339, firstStr)
+		if err != nil {
+			log.Fatalf("Could not parse first date: %s\n", firstStr)
+		}
+		first, err := ptypes.TimestampProto(firstTime)
+		if err != nil {
+			log.Fatalf("Could not build first TimestampProto")
+		}
+		lastTime, err := time.Parse(time.RFC3339, lastStr)
+		if err != nil {
+			log.Fatalf("Could not parse last date: %s\n", lastStr)
+		}
+		last, err := ptypes.TimestampProto(lastTime)
+		if err != nil {
+			log.Fatalf("Could not build TimestampProto")
+		}
+		r, err := client.Query(ctx, &query.RangedRequest{
+			Symbol: name,
+			Series: series,
+			First:  first,
+			Last:   last,
 		})
 		if err != nil {
 			log.Fatalf("could not Query: %v", err)
 		}
 		log.Printf("Query response: %s", r.GetData())
-	}
-
-	// demo 1 call to QueryStream
-	{
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		stream, err := client.QueryStream(ctx, &query.RangeRequest{
-			Symbol:   name,
-			First:    nil,
-			Last:     nil,
-			Calendar: query.Calendar_COMPLETE,
-		})
-
-		if err != nil {
-			log.Fatalf("%v.QueryStream(_) = _, %v", client, err)
-		}
-
-		for {
-			dataPoint, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatalf("%v.QueryStream(_) = _, %v", client, err)
-			}
-			log.Printf("DataPoint: timestamp: %v double: %v", dataPoint.GetTimestamp(), dataPoint.Double)
-		}
 	}
 }
