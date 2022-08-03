@@ -1,9 +1,15 @@
-FROM golang:1.16
+FROM golang:1.18-alpine AS builder
 
-WORKDIR /go/src/github.com/luckless-finance/query
+WORKDIR /src
 COPY go.mod .
 COPY go.sum .
 COPY *.go ./
 COPY client luckless_client
+RUN go build -o client luckless_client/main.go
 
-CMD go run luckless_client/main.go
+FROM alpine
+
+WORKDIR /app
+COPY --from=builder /src/client .
+
+CMD ./client
